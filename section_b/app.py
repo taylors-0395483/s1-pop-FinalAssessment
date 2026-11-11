@@ -77,6 +77,10 @@ CHINESE = {
 
     # Sidebar controls
     "Filters": "筛选条件",
+    "{count} active": "{count} 项已启用",
+    "SALES": "销售",
+    "CHARGING SESSIONS": "充电会话",
+    "Reset filters": "重置筛选",
     "Sales filters": "销售筛选",
     "Date range": "日期范围",
     "Sales data has no valid transaction dates.": "销售数据中无有效的交易日期。",
@@ -127,6 +131,14 @@ CHINESE = {
     "Temperature threshold (°C)": "温度阈值 (°C)",
     "High-risk sessions are hotter than this value and overstay by more than 20 minutes.":
         "高风险会话电池温度高于此值且超时停放超过 20 分钟。",
+    "**High-risk sessions: {count}**\n\n{pct}% of filtered sessions · battery above "
+    "{threshold} °C and overstay above 20 min":
+        "**高风险会话：{count} 条**\n\n占筛选会话 {pct}% · 电池温度高于 "
+        "{threshold} °C 且超时停放超过 20 分钟",
+    "**High temperature, no overstay: {count}**\n\n{pct}% of filtered sessions · "
+    "battery above {threshold} °C, overstay 20 min or less":
+        "**高温未超时：{count} 条**\n\n占筛选会话 {pct}% · 电池温度高于 "
+        "{threshold} °C，超时停放不超过 20 分钟",
     "{count:,} high-risk sessions ({share:.1f}% of filtered sessions). Battery temperature "
     "is above {threshold:.1f}°C and overstay is above {limit} minutes.":
         "{count:,} 条高风险充电会话（占筛选会话的 {share:.1f}%）。电池温度高于 "
@@ -230,7 +242,16 @@ def apply_custom_style():
     .stApp { background:#eef5ff; color:#18253c; }
     [data-testid="stMainBlockContainer"] { max-width:1480px; padding:2rem 2.5rem 3rem; }
     [data-testid="stHeader"] { background:transparent; }
-    [data-testid="stSidebar"] { background:white; border-right:1px solid #e1e9f5; }
+    [data-testid="stSidebar"] {
+        background-color: #eef5ff !important;
+        border-right: none !important;
+        width: 300px !important;
+        min-width: 300px !important;
+        max-width: 300px !important;
+    }
+    [data-testid="stSidebar"] > div:first-child {
+        background-color: #eef5ff !important;
+    }
     .st-key-top_navigation {
         background:white;
         padding:12px 18px;
@@ -384,6 +405,91 @@ def apply_custom_style():
     [data-testid="stMetricDelta"] { font-size:12px; }
     h3 { font-size:17px !important; letter-spacing:-.25px; }
     [data-testid="stCaptionContainer"] { color:#74829a; }
+    div[data-testid="stVerticalBlockBorderWrapper"]:has(.st-key-filter_panel) > div,
+    .st-key-filter_panel {
+        background: #ffffff !important;
+        border: 1px solid #e1e9f5 !important;
+        border-radius: 12px !important;
+    }
+    .filter-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 8px;
+    }
+    .filter-header .filter-title {
+        font-size: 15px;
+        font-weight: 600;
+        color: #18253c;
+    }
+    .filter-header .filter-active {
+        font-size: 12px;
+        color: #687b96;
+    }
+    .filter-group-label {
+        font-size: 11px;
+        letter-spacing: .06em;
+        color: #687b96;
+        font-weight: 600;
+        text-transform: uppercase;
+        margin-top: 10px;
+        margin-bottom: 2px;
+    }
+    .st-key-filter_panel [data-testid="stWidgetLabel"] p,
+    .st-key-filter_panel label p {
+        font-size: 13px !important;
+    }
+    .st-key-alert_cards {
+        margin-top: 8px !important;
+        margin-bottom: 16px !important;
+    }
+    .st-key-alert_cards [data-testid="stAlert"] [data-testid="stAlertContainer"] {
+        background: #ffffff !important;
+        border: 1px solid #e1e9f5 !important;
+        border-radius: 10px !important;
+        padding: 14px 16px !important;
+        color: #18253c !important;
+    }
+    .st-key-alert_cards [data-testid="stAlert"]:has([data-testid="stAlertContentError"])
+        [data-testid="stAlertContainer"] {
+        border-left: 4px solid #d03b3b !important;
+    }
+    .st-key-alert_cards [data-testid="stAlert"]:has([data-testid="stAlertContentWarning"])
+        [data-testid="stAlertContainer"] {
+        border-left: 4px solid #f79009 !important;
+    }
+    .st-key-alert_cards [data-testid="stAlert"] [data-testid="stAlertContainer"] p,
+    .st-key-alert_cards [data-testid="stAlert"] [data-testid="stAlertContainer"] span,
+    .st-key-alert_cards [data-testid="stAlert"] [data-testid="stAlertContainer"] div {
+        color: #18253c !important;
+        font-size: 14px !important;
+        line-height: 1.5 !important;
+    }
+    .st-key-alert_cards [data-testid="stAlertContainer"] [data-testid="stMarkdownContainer"] p {
+        margin: 0 0 2px !important;
+    }
+    .st-key-alert_cards [data-testid="stAlertContainer"] [data-testid="stMarkdownContainer"]
+        p:last-child {
+        color: #687b96 !important;
+        font-size: 13px !important;
+        margin: 0 !important;
+    }
+    .st-key-alert_cards [data-testid="stAlert"] [data-testid="stAlertContainer"] strong {
+        font-size: 14px !important;
+        color: #18253c !important;
+    }
+    .st-key-alert_cards [data-testid="stAlert"]:has([data-testid="stAlertContentError"])
+        [data-testid="stAlertDynamicIcon"],
+    .st-key-alert_cards [data-testid="stAlert"]:has([data-testid="stAlertContentError"])
+        [data-testid="stAlertDynamicIcon"] * {
+        color: #d03b3b !important;
+    }
+    .st-key-alert_cards [data-testid="stAlert"]:has([data-testid="stAlertContentWarning"])
+        [data-testid="stAlertDynamicIcon"],
+    .st-key-alert_cards [data-testid="stAlert"]:has([data-testid="stAlertContentWarning"])
+        [data-testid="stAlertDynamicIcon"] * {
+        color: #f79009 !important;
+    }
     @media(max-width:760px) {
         [data-testid="stMainBlockContainer"] { padding:2rem 1rem; }
         .campus-banner { height:auto; gap:12px; align-items:stretch; }
@@ -509,44 +615,91 @@ def alert_mask(sessions, threshold):
 
 
 def render_sidebar(sessions, sales):
-    """Draw sidebar filters for sales dates and charging sessions, returning selection."""
-    st.sidebar.markdown(f"### {t('Filters')}")
-
+    """Draw sidebar filter panel inside a card container, returning current selection."""
     days = transaction_days(sales).dropna()
     if days.empty:
         st.error(t("Sales data has no valid transaction dates."))
         st.stop()
     first_day, last_day = days.min().date(), days.max().date()
-    st.sidebar.subheader(t("Sales filters"))
-    raw_range = st.sidebar.date_input(
-        t("Date range"),
-        value=(first_day, last_day),
-        min_value=first_day,
-        max_value=last_day,
-        key="sales_date_range",
-    )
+    default_range = (first_day, last_day)
+    default_chargers = ordered_labels(sessions["Charger_Type"], ("AC", "DC"))
+
     observed_max = pd.to_numeric(sessions["Energy_kWh"], errors="coerce").max()
     max_energy = (
         1.0 if pd.isna(observed_max) or float(observed_max) <= 0 else float(observed_max)
     )
-    st.sidebar.subheader(t("Charging session filters"))
-    minimum_energy = st.sidebar.slider(
-        t("Minimum energy (kWh)"),
-        min_value=0.0,
-        max_value=max_energy,
-        value=0.0,
-        step=0.1,
-        key="minimum_energy_kwh",
-        format="%.1f",
-    )
-    options = ordered_labels(sessions["Charger_Type"], ("AC", "DC"))
-    selected = st.sidebar.multiselect(
-        t("Charger type"),
-        options=options,
-        default=options,
-        format_func=t,
-        key="charger_types",
-    )
+
+    def reset_filters():
+        st.session_state["sales_date_range"] = default_range
+        st.session_state["minimum_energy_kwh"] = 0.0
+        st.session_state["charger_types"] = list(default_chargers)
+
+    cur_range = st.session_state.get("sales_date_range", default_range)
+    cur_start, cur_end = date_bounds(cur_range, first_day, last_day)
+    is_date_active = (cur_start, cur_end) != default_range
+
+    cur_energy = float(st.session_state.get("minimum_energy_kwh", 0.0))
+    is_energy_active = cur_energy > 0.0
+
+    cur_chargers = st.session_state.get("charger_types", default_chargers)
+    is_chargers_active = set(cur_chargers) != set(default_chargers)
+
+    active_count = int(is_date_active) + int(is_energy_active) + int(is_chargers_active)
+    active_text = t("{count} active", count=active_count)
+
+    # Seed defaults once; passing value= as well would trigger a Session State warning.
+    st.session_state.setdefault("sales_date_range", default_range)
+    st.session_state.setdefault("minimum_energy_kwh", 0.0)
+    st.session_state.setdefault("charger_types", list(default_chargers))
+
+    with st.sidebar.container(key="filter_panel", border=True):
+        st.markdown(
+            f'<div class="filter-header">'
+            f'<span class="filter-title">{escape(t("Filters"))}</span>'
+            f'<span class="filter-active">{escape(active_text)}</span>'
+            f'</div>',
+            unsafe_allow_html=True,
+        )
+
+        st.markdown(
+            f'<div class="filter-group-label">{escape(t("SALES"))}</div>',
+            unsafe_allow_html=True,
+        )
+        raw_range = st.date_input(
+            t("Date range"),
+            min_value=first_day,
+            max_value=last_day,
+            key="sales_date_range",
+        )
+
+        st.markdown(
+            f'<div class="filter-group-label">{escape(t("CHARGING SESSIONS"))}</div>',
+            unsafe_allow_html=True,
+        )
+        minimum_energy = st.slider(
+            t("Minimum energy (kWh)"),
+            min_value=0.0,
+            max_value=max_energy,
+            step=0.1,
+            key="minimum_energy_kwh",
+            format="%.1f",
+        )
+        selected = st.multiselect(
+            t("Charger type"),
+            options=default_chargers,
+            format_func=t,
+            key="charger_types",
+        )
+
+        st.button(
+            t("Reset filters"),
+            type="secondary",
+            width="stretch",
+            icon=":material/restart_alt:",
+            on_click=reset_filters,
+            key="reset_filters_btn",
+        )
+
     start, end = date_bounds(raw_range, first_day, last_day)
     return {
         "start": start,
@@ -876,7 +1029,7 @@ def draw_temperature_scatter(sessions, threshold):
 
 
 def render_alert_banners(sessions, threshold):
-    """Show an error, warning, or success banner for the current threshold."""
+    """Show paired error and warning status cards for the current threshold."""
     temperature = pd.to_numeric(sessions["Battery_Temp_C"], errors="coerce")
     hot = temperature.gt(threshold).fillna(False)
     risky = alert_mask(sessions, threshold).fillna(False)
@@ -885,31 +1038,32 @@ def render_alert_banners(sessions, threshold):
     total = len(sessions)
     risky_share = 0.0 if total == 0 else risky_count / total * 100
     warm_share = 0.0 if total == 0 else warm_count / total * 100
-    limit = OVERSTAY_LIMIT_MINS
+    thresh_val = f"{threshold:g}"
 
-    if risky_count:
-        st.error(t(
-            "{count:,} high-risk sessions ({share:.1f}% of filtered sessions). "
-            "Battery temperature is above {threshold:.1f}°C and overstay is above {limit} minutes.",
-            count=risky_count,
-            share=risky_share,
-            threshold=threshold,
-            limit=limit,
-        ))
-    if warm_count:
-        st.warning(t(
-            "{count:,} sessions are above {threshold:.1f}°C without an overstay above "
-            "{limit} minutes ({share:.1f}% of filtered sessions).",
-            count=warm_count,
-            threshold=threshold,
-            limit=limit,
-            share=warm_share,
-        ))
-    if not risky_count and not warm_count:
-        st.success(t(
-            "No filtered sessions are above the {threshold:.1f}°C temperature threshold.",
-            threshold=threshold,
-        ))
+    with st.container(key="alert_cards"):
+        left_col, right_col = st.columns(2)
+        with left_col:
+            st.error(
+                t(
+                    "**High-risk sessions: {count}**\n\n{pct}% of filtered sessions · "
+                    "battery above {threshold} °C and overstay above 20 min",
+                    count=risky_count,
+                    pct=f"{risky_share:.1f}",
+                    threshold=thresh_val,
+                ),
+                icon=":material/error:",
+            )
+        with right_col:
+            st.warning(
+                t(
+                    "**High temperature, no overstay: {count}**\n\n{pct}% of filtered sessions · "
+                    "battery above {threshold} °C, overstay 20 min or less",
+                    count=warm_count,
+                    pct=f"{warm_share:.1f}",
+                    threshold=thresh_val,
+                ),
+                icon=":material/warning:",
+            )
 
 
 def get_session_column_config():
@@ -1183,6 +1337,7 @@ def main():
         page_title=t("Smart Campus Energy Console"),
         page_icon=str(LOGO_PATH),
         layout="wide",
+        initial_sidebar_state="expanded",
     )
     apply_custom_style()
 
