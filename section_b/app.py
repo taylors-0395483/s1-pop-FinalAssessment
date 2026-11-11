@@ -53,6 +53,7 @@ STATUS_COLORS = {
 }
 
 CHINESE = {
+    "Choose charger types": "选择充电桩类型",
     # Brand and navigation
     "Smart Campus Energy Console": "智慧校园能源控制台",
     "Taylor's Lakeside Campus": "泰莱大学湖畔校区",
@@ -245,6 +246,8 @@ def apply_custom_style():
     [data-testid="stSidebar"] {
         background-color: #eef5ff !important;
         border-right: none !important;
+    }
+    [data-testid="stSidebar"][aria-expanded="true"] {
         width: 300px !important;
         min-width: 300px !important;
         max-width: 300px !important;
@@ -687,7 +690,7 @@ def render_sidebar(sessions, sales):
         selected = st.multiselect(
             t("Charger type"),
             options=default_chargers,
-            format_func=t,
+            placeholder=t("Choose charger types"),
             key="charger_types",
         )
 
