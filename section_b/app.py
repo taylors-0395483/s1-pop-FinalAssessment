@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+import base64
 import math
 import os
 import sys
 from datetime import date, datetime
+from html import escape
+from pathlib import Path
 
 # Make data_pipeline.py (same folder) importable whatever the working directory is.
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -22,6 +25,10 @@ from data_pipeline import (  # noqa: E402
     prepare_sales_data,
 )
 
+ASSETS_DIR = Path(__file__).resolve().parent / "assets"
+LOGO_PATH = ASSETS_DIR / "taylors-logo.png"
+CAMPUS_PATH = ASSETS_DIR / "taylors-campus.webp"
+
 TEMP_KEY = "alert_temp_threshold"
 EV_COLUMNS = (
     "Session_ID", "Charger_Type", "User_Type", "Start_Hour", "Energy_kWh",
@@ -29,15 +36,15 @@ EV_COLUMNS = (
 )
 SALES_COLUMNS = ("Transaction_Date", "Total_Revenue_MYR")
 
-COLOR_PRIMARY_BLUE = "#2a78d6"
-COLOR_AXIS_DOMAIN = "#c3c2b7"
-COLOR_AXIS_GRID = "#e1e0d9"
-COLOR_MUTED_TEXT = "#52514e"
-COLOR_CHART_BG = "#fcfcfb"
+COLOR_PRIMARY_BLUE = "#155EEF"
+COLOR_AXIS_DOMAIN = "#c9d6e8"
+COLOR_AXIS_GRID = "#e5edf7"
+COLOR_MUTED_TEXT = "#687b96"
+COLOR_CHART_BG = "#ffffff"
 
 USER_TYPE_COLORS = {
     "domain": ["Student", "Staff", "Visitor"],
-    "range": ["#2a78d6", "#eb6834", "#1baf7a"],
+    "range": ["#155EEF", "#eb6834", "#1baf7a"],
 }
 
 STATUS_COLORS = {
@@ -45,12 +52,350 @@ STATUS_COLORS = {
     "range": ["#d03b3b", "#fab219", "#c3c2b7"],
 }
 
-CUSTOM_CSS = """
-<style>
-.block-container {padding-top: 2rem;}
-[data-testid="stMetricValue"] {font-size: 1.6rem;}
-</style>
-"""
+CHINESE = {
+    # Brand and navigation
+    "Smart Campus Energy Console": "智慧校园能源控制台",
+    "Taylor's Lakeside Campus": "泰莱大学湖畔校区",
+    "Executive Overview": "管理概览",
+    "Alert Center": "告警中心",
+    "Data Viewer": "数据查看",
+    "English": "English",
+    "中文": "中文",
+
+    # Campus banner descriptions
+    "Track campus energy demand, EV charging metrics, and retail sales revenue.":
+        "监控校园能源需求、充电指标及零售销售收入。",
+    "Identify over-temperature battery events and overstay risk sessions.":
+        "监测电池过温事件与超时停放高风险会话。",
+    "Inspect and export raw charging sessions and retail transactions.":
+        "查看并导出充电会话与零售交易明细数据。",
+    "{count:,} of {total:,} sessions · Sales {start} → {end} · Chargers: {chargers}":
+        "{total:,} 条记录中已筛选 {count:,} 条 · 销售日期 {start} → {end} · 充电桩类型: {chargers}",
+    "None": "无",
+    "AC": "AC（交流）",
+    "DC": "DC（直流）",
+
+    # Sidebar controls
+    "Filters": "筛选条件",
+    "Sales filters": "销售筛选",
+    "Date range": "日期范围",
+    "Sales data has no valid transaction dates.": "销售数据中无有效的交易日期。",
+    "Charging session filters": "充电会话筛选",
+    "Minimum energy (kWh)": "最低充电量（kWh）",
+    "Charger type": "充电桩类型",
+
+    # KPI strip
+    "Total energy (kWh)": "总用电量 (kWh)",
+    "Delta: average energy per filtered session vs all sessions.":
+        "Delta：筛选会话的平均充电量与全部会话对比。",
+    "Carbon offset (kg CO₂)": "碳减排量 (kg CO₂)",
+    "Delta: average carbon saving per filtered session vs all sessions.":
+        "Delta：筛选会话的平均碳减排量与全部会话对比。",
+    "Total revenue (MYR)": "总收入 (MYR)",
+    "Filtered sales revenue plus filtered charging Net Billable. Delta: average sales "
+    "transaction value vs all transactions.":
+        "筛选销售收入加上筛选充电净应收账单。Delta：平均销售交易额与全部交易对比。",
+    "Active alerts": "活跃告警",
+    "Sessions above the alert temperature with more than 20 minutes overstay. Delta: "
+    "change versus the default 40 °C threshold.":
+        "温度超过告警阈值且超时停放超过 20 分钟的会话。Delta：较默认 40 °C 阈值的变化量。",
+
+    # Executive Overview charts
+    "Energy demand by start hour": "按会话开始小时统计能源需求",
+    "Total energy delivered across campus by session start hour.":
+        "按会话开始小时统计全校总充电交付量。",
+    "No charging sessions match the current filters.": "当前筛选条件下无匹配的充电会话。",
+    "Start hour": "开始小时",
+    "Energy delivered (kWh)": "交付电量 (kWh)",
+    "Average net bill by charger and user type": "按充电桩与用户类型统计平均净应收金额",
+    "Mean billable revenue comparing AC and DC chargers across user groups.":
+        "比较交流与直流充电桩在各用户群体中的平均应收收入。",
+    "Average net billable (MYR)": "平均净应收金额 (MYR)",
+    "Average net bill (MYR)": "平均净应收金额 (MYR)",
+    "User type": "用户类型",
+    "Student": "学生",
+    "Staff": "教职工",
+    "Visitor": "访客",
+    "Daily sales revenue": "每日销售收入",
+    "Aggregated daily revenue from campus retail and energy services.":
+        "校园零售与能源服务的每日汇总收入。",
+    "No sales transactions match the current filters.": "当前筛选条件下无匹配的销售交易。",
+    "Transaction date": "交易日期",
+    "Revenue (MYR)": "收入 (MYR)",
+
+    # Alert Center
+    "Temperature threshold (°C)": "温度阈值 (°C)",
+    "High-risk sessions are hotter than this value and overstay by more than 20 minutes.":
+        "高风险会话电池温度高于此值且超时停放超过 20 分钟。",
+    "{count:,} high-risk sessions ({share:.1f}% of filtered sessions). Battery temperature "
+    "is above {threshold:.1f}°C and overstay is above {limit} minutes.":
+        "{count:,} 条高风险充电会话（占筛选会话的 {share:.1f}%）。电池温度高于 "
+        "{threshold:.1f}°C 且超时停放超过 {limit} 分钟。",
+    "{count:,} sessions are above {threshold:.1f}°C without an overstay above "
+    "{limit} minutes ({share:.1f}% of filtered sessions).":
+        "{count:,} 条充电会话电池温度高于 {threshold:.1f}°C 且超时未超过 "
+        "{limit} 分钟（占筛选会话的 {share:.1f}%）。",
+    "No filtered sessions are above the {threshold:.1f}°C temperature threshold.":
+        "当前筛选的充电会话中无电池温度高于 {threshold:.1f}°C 的记录。",
+    "High-risk sessions": "高风险会话",
+    "Sessions above the threshold with an overstay above 20 minutes, hottest first.":
+        "高于阈值且超时停放超过 20 分钟的会话，按温度由高到低排序。",
+    "Battery temperature vs overstay": "电池温度与超时停放关系",
+    "Scatter plot of battery temperature versus overstay minutes with safety thresholds.":
+        "电池温度与超时停放分钟数的散点图及安全阈值线。",
+    "No valid temperature and overstay data to display.": "无有效的温度与超时数据可供展示。",
+    "Battery temperature (°C)": "电池温度 (°C)",
+    "Battery temp (°C)": "电池温度 (°C)",
+    "Battery Temp (°C)": "电池温度 (°C)",
+    "Overstay (minutes)": "超时停放（分钟）",
+    "Overstay (mins)": "超时停放（分钟）",
+    "Status": "状态",
+    "High risk": "高风险",
+    "High temp (no overstay)": "高温未超时",
+    "Normal": "正常",
+    "Session ID": "会话编号",
+
+    # Column configs
+    "Session ID": "会话编号",
+    "Charger Type": "充电桩类型",
+    "User Type": "用户类型",
+    "Start Hour": "开始小时",
+    "Duration (mins)": "充电时长（分钟）",
+    "Duration (hours)": "充电时长（小时）",
+    "Energy (kWh)": "充电量 (kWh)",
+    "Overstay (mins)": "超时停放（分钟）",
+    "Battery Temp (°C)": "电池温度 (°C)",
+    "Grid Status": "电网状态",
+    "Power Rate (kW)": "功率 (kW)",
+    "Carbon Savings (kg CO₂)": "碳减排量 (kg CO₂)",
+    "Peak Hour": "高峰时段",
+    "Base Rate (MYR)": "基础费率 (MYR)",
+    "Base Fee (MYR)": "基础费用 (MYR)",
+    "Peak Surge (MYR)": "高峰附加费 (MYR)",
+    "Overstay Fee (MYR)": "超时附加费 (MYR)",
+    "Net Billable (MYR)": "净应收金额 (MYR)",
+    "High Risk": "高风险",
+
+    "Transaction ID": "交易编号",
+    "Hub Location": "网点位置",
+    "Category": "商品类别",
+    "Units Sold": "售出数量",
+    "Unit Price (MYR)": "单价 (MYR)",
+    "Total Revenue (MYR)": "总收入 (MYR)",
+    "Customer Type": "客户类型",
+    "Transaction Date": "交易日期",
+    "Payment Method": "支付方式",
+
+    # Data Viewer tabs and downloads
+    "Charging sessions": "充电会话",
+    "Sales transactions": "销售交易",
+    "{filtered:,} of {total:,} charging sessions":
+        "{total:,} 条充电会话中已筛选 {filtered:,} 条",
+    "{filtered:,} of {total:,} sales transactions":
+        "{total:,} 条销售交易中已筛选 {filtered:,} 条",
+    "Download filtered charging sessions": "下载筛选后的充电会话 CSV",
+    "Download filtered sales transactions": "下载筛选后的销售交易 CSV",
+
+    # Error handling messages
+    "Could not load the dashboard data: {exc}": "无法加载控制台数据：{exc}",
+    "Could not draw hourly energy demand: {exc}": "无法绘制小时能源需求图：{exc}",
+    "Could not draw average net billable: {exc}": "无法绘制平均净应收金额图：{exc}",
+    "Could not draw sales revenue: {exc}": "无法绘制销售收入图：{exc}",
+    "Could not draw the alert scatter: {exc}": "无法绘制告警散点图：{exc}",
+}
+
+
+def t(english: str, **values) -> str:
+    """Translate presentation text without altering data category codes."""
+    text = (
+        CHINESE.get(english, english)
+        if st.session_state.get("language") == "中文"
+        else english
+    )
+    return text.format(**values) if values else text
+
+
+def image_uri(name: str) -> str:
+    """Return a base64 data URI for an asset image."""
+    image = ASSETS_DIR / name
+    if not image.is_file():
+        return ""
+    mime = "image/png" if image.suffix == ".png" else "image/webp"
+    return f"data:{mime};base64,{base64.b64encode(image.read_bytes()).decode()}"
+
+
+def apply_custom_style():
+    """Apply Taylor's campus formal theme styling across all components."""
+    st.markdown("""<style>
+    .stApp { background:#eef5ff; color:#18253c; }
+    [data-testid="stMainBlockContainer"] { max-width:1480px; padding:2rem 2.5rem 3rem; }
+    [data-testid="stHeader"] { background:transparent; }
+    [data-testid="stSidebar"] { background:white; border-right:1px solid #e1e9f5; }
+    .st-key-top_navigation {
+        background:white;
+        padding:12px 18px;
+        border-radius:12px;
+        margin-bottom:12px;
+        border:1px solid #e1e9f5;
+        overflow:hidden;
+    }
+    .brand { display:flex; align-items:center; gap:10px; min-height:42px; margin:0; }
+    .brand img {
+        width:42px;
+        height:42px;
+        max-height:42px;
+        object-fit:contain;
+        flex-shrink:0;
+        display:block;
+        border-radius:4px;
+    }
+    .brand strong {
+        display:block;
+        font-size:18px;
+        letter-spacing:-.6px;
+        color:#122344;
+        line-height:1.2;
+    }
+    .brand small { font-size:12px; color:#74829a; }
+    .st-key-top_navigation [data-testid="stColumn"]:nth-child(2) [data-testid="stColumn"] {
+        display:flex !important;
+        align-items:center !important;
+        justify-content:center !important;
+    }
+    .st-key-top_navigation [data-testid="stColumn"]:nth-child(2) [data-testid="stVerticalBlock"] {
+        display:flex !important;
+        align-items:center !important;
+        justify-content:center !important;
+        gap:0 !important;
+        width:100% !important;
+    }
+    .st-key-top_navigation [data-testid="stColumn"]:nth-child(2)
+        [data-testid="stElementContainer"],
+    .st-key-top_navigation [data-testid="stColumn"]:nth-child(2)
+        [data-testid="stMarkdownContainer"],
+    .st-key-top_navigation [data-testid="stColumn"]:nth-child(2)
+        [data-testid="stPageLink"],
+    .st-key-top_navigation [data-testid="stColumn"]:nth-child(2)
+        [data-testid="stPageLink"] > div {
+        display:flex !important;
+        align-items:center !important;
+        justify-content:center !important;
+        margin:0 !important;
+        padding:0 !important;
+        height:36px !important;
+        min-height:36px !important;
+        max-height:36px !important;
+        width:100% !important;
+    }
+    .st-key-top_navigation [data-testid="stPageLink-NavLink"],
+    .nav-active {
+        box-sizing:border-box !important;
+        display:inline-flex !important;
+        align-items:center !important;
+        justify-content:center !important;
+        height:36px !important;
+        min-height:36px !important;
+        max-height:36px !important;
+        padding:6px 12px !important;
+        font-size:14px !important;
+        font-weight:500 !important;
+        line-height:20px !important;
+        text-decoration:none !important;
+        border:none !important;
+        border-bottom:2px solid transparent !important;
+        border-radius:0 !important;
+        margin:0 !important;
+        vertical-align:middle !important;
+    }
+    .st-key-top_navigation [data-testid="stPageLink-NavLink"] {
+        background:transparent !important;
+        color:#52637a !important;
+    }
+    .st-key-top_navigation [data-testid="stPageLink-NavLink"]:hover {
+        color:#155eef !important;
+        background:transparent !important;
+    }
+    .st-key-top_navigation [data-testid="stPageLink-NavLink"] p,
+    .st-key-top_navigation [data-testid="stPageLink-NavLink"] span {
+        font-size:14px !important;
+        font-weight:500 !important;
+        line-height:20px !important;
+        color:inherit !important;
+        margin:0 !important;
+        padding:0 !important;
+    }
+    .nav-active-wrap {
+        display:flex !important;
+        align-items:center !important;
+        justify-content:center !important;
+        width:100% !important;
+        height:36px !important;
+        margin:0 !important;
+        padding:0 !important;
+    }
+    .nav-active {
+        color:#155eef !important;
+        border-bottom:2px solid #155eef !important;
+    }
+    .campus-banner {
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        height:150px;
+        overflow:hidden;
+        margin:4px 0 14px;
+    }
+    .campus-banner .banner-copy { width:49%; padding:8px 4px; }
+    .campus-banner h1 {
+        font-size:30px;
+        line-height:1.15;
+        margin:0 0 8px;
+        padding:0;
+        letter-spacing:-0.8px;
+        color:#122344;
+    }
+    .campus-banner p { color:#687b96; margin:0 0 6px; font-size:13.5px; }
+    .campus-banner img {
+        width:49%;
+        height:150px;
+        object-fit:cover;
+        object-position:center 65%;
+        border-radius:12px;
+    }
+    [data-testid="stVerticalBlockBorderWrapper"] > div {
+        border-color:#e1e9f5;
+        border-radius:12px;
+    }
+    .st-key-kpi_strip, .st-key-records, div[class*="st-key-records_"],
+    div[class*="st-key-chart_"] {
+        background:white;
+        border-radius:12px;
+    }
+    .st-key-records, div[class*="st-key-records_"] { overflow:hidden; }
+    .st-key-kpi_strip [data-testid="stMetric"] { padding:3px 8px; }
+    .st-key-kpi_strip [data-testid="stMetricLabel"] p { color:#687b96; font-size:13px; }
+    .st-key-kpi_strip [data-testid="stMetricValue"] {
+        font-size:clamp(23px,2.3vw,34px) !important;
+        font-weight:650 !important;
+    }
+    .st-key-kpi_strip [data-testid="stColumn"] + [data-testid="stColumn"] {
+        border-left:1px solid #e5edf7;
+    }
+    [data-testid="stMetricDelta"] { font-size:12px; }
+    h3 { font-size:17px !important; letter-spacing:-.25px; }
+    [data-testid="stCaptionContainer"] { color:#74829a; }
+    @media(max-width:760px) {
+        [data-testid="stMainBlockContainer"] { padding:2rem 1rem; }
+        .campus-banner { height:auto; gap:12px; align-items:stretch; }
+        .campus-banner .banner-copy { width:57%; }
+        .campus-banner h1 { font-size:24px; }
+        .campus-banner img { width:40%; min-height:150px; }
+        .brand strong { font-size:16px; }
+        .st-key-kpi_strip [data-testid="stColumn"] + [data-testid="stColumn"] {
+            border-left:0;
+        }
+    }
+    </style>""", unsafe_allow_html=True)
 
 
 def require_frame(frame, columns, loader_name):
@@ -80,7 +425,7 @@ def load_dashboard_data():
     try:
         return load_ev_frame(), load_sales_frame()
     except Exception as exc:
-        st.error(f"Could not load the dashboard data: {exc}")
+        st.error(t("Could not load the dashboard data: {exc}", exc=exc))
         st.stop()
 
 
@@ -156,35 +501,57 @@ def apply_filters(sessions, sales, selection):
     return filtered_sessions, filtered_sales
 
 
+def alert_mask(sessions, threshold):
+    """Mark sessions above the temperature threshold that also overstay."""
+    temperature = pd.to_numeric(sessions["Battery_Temp_C"], errors="coerce")
+    overstay = pd.to_numeric(sessions["Overstay_Mins"], errors="coerce")
+    return temperature.gt(threshold) & overstay.gt(OVERSTAY_LIMIT_MINS)
+
+
 def render_sidebar(sessions, sales):
-    """Draw the brand header, sales and charging filters, and return selection."""
-    st.sidebar.markdown("### ⚡ Smart Campus EV")
-    st.sidebar.caption("Energy & fleet dashboard")
+    """Draw sidebar filters for sales dates and charging sessions, returning selection."""
+    st.sidebar.markdown(f"### {t('Filters')}")
 
     days = transaction_days(sales).dropna()
     if days.empty:
-        st.error("Sales data has no valid transaction dates.")
+        st.error(t("Sales data has no valid transaction dates."))
         st.stop()
     first_day, last_day = days.min().date(), days.max().date()
-    st.sidebar.subheader("Sales filters")
+    st.sidebar.subheader(t("Sales filters"))
     raw_range = st.sidebar.date_input(
-        "Date range", value=(first_day, last_day), min_value=first_day,
-        max_value=last_day, key="sales_date_range",
+        t("Date range"),
+        value=(first_day, last_day),
+        min_value=first_day,
+        max_value=last_day,
+        key="sales_date_range",
     )
     observed_max = pd.to_numeric(sessions["Energy_kWh"], errors="coerce").max()
-    max_energy = 1.0 if pd.isna(observed_max) or float(observed_max) <= 0 else float(observed_max)
-    st.sidebar.subheader("Charging session filters")
+    max_energy = (
+        1.0 if pd.isna(observed_max) or float(observed_max) <= 0 else float(observed_max)
+    )
+    st.sidebar.subheader(t("Charging session filters"))
     minimum_energy = st.sidebar.slider(
-        "Minimum energy (kWh)", min_value=0.0, max_value=max_energy, value=0.0,
-        step=0.1, key="minimum_energy_kwh", format="%.1f",
+        t("Minimum energy (kWh)"),
+        min_value=0.0,
+        max_value=max_energy,
+        value=0.0,
+        step=0.1,
+        key="minimum_energy_kwh",
+        format="%.1f",
     )
     options = ordered_labels(sessions["Charger_Type"], ("AC", "DC"))
     selected = st.sidebar.multiselect(
-        "Charger type", options=options, default=options, key="charger_types",
+        t("Charger type"),
+        options=options,
+        default=options,
+        format_func=t,
+        key="charger_types",
     )
     start, end = date_bounds(raw_range, first_day, last_day)
     return {
-        "start": start, "end": end, "minimum_energy": float(minimum_energy),
+        "start": start,
+        "end": end,
+        "minimum_energy": float(minimum_energy),
         "charger_types": tuple(selected),
     }
 
@@ -197,29 +564,41 @@ def load_filtered_view():
     return sessions, sales, filtered_sessions, filtered_sales, selection
 
 
-def alert_mask(sessions, threshold):
-    """Mark sessions above the temperature threshold that also overstay."""
-    temperature = pd.to_numeric(sessions["Battery_Temp_C"], errors="coerce")
-    overstay = pd.to_numeric(sessions["Overstay_Mins"], errors="coerce")
-    return temperature.gt(threshold) & overstay.gt(OVERSTAY_LIMIT_MINS)
+def format_filter_summary(sessions, filtered_sessions, selection):
+    """Format one-line filter summary for the campus banner."""
+    chargers_list = selection["charger_types"]
+    if not chargers_list:
+        chargers_text = t("None")
+    else:
+        chargers_text = ", ".join(t(c) for c in chargers_list)
+    return t(
+        "{count:,} of {total:,} sessions · Sales {start} → {end} · Chargers: {chargers}",
+        count=len(filtered_sessions),
+        total=len(sessions),
+        start=selection["start"],
+        end=selection["end"],
+        chargers=chargers_text,
+    )
 
 
-def render_page_header(title: str, sessions, filtered_sessions, selection):
-    """Display the top page title and an active filter summary caption."""
-    st.title(title)
-    chargers_text = (
-        ", ".join(selection["charger_types"]) if selection["charger_types"] else "None"
+def render_campus_banner(title: str, subtitle: str, summary: str):
+    """Render top campus banner with page heading, description, filter summary, and photo."""
+    banner_html = (
+        f'<div class="campus-banner">'
+        f'<div class="banner-copy">'
+        f'<h1>{escape(t(title))}</h1>'
+        f'<p>{escape(t(subtitle))}</p>'
+        f'<p>{escape(summary)}</p>'
+        f'</div>'
+        f'<img src="{image_uri("taylors-campus.webp")}" '
+        f'alt="Taylor’s Lakeside Campus buildings and lake">'
+        f'</div>'
     )
-    summary = (
-        f"{len(filtered_sessions):,} of {len(sessions):,} sessions · "
-        f"Sales {selection['start']} → {selection['end']} · "
-        f"Chargers: {chargers_text}"
-    )
-    st.caption(summary)
+    st.markdown(banner_html, unsafe_allow_html=True)
 
 
 def render_kpi_header(sessions, filtered_sessions, sales, filtered_sales):
-    """Show four executive KPI metric cards inside bordered column containers."""
+    """Show four executive KPI metric cards inside a bordered strip container."""
     energy_sum = numeric_sum(filtered_sessions, "Energy_kWh")
     carbon_sum = numeric_sum(filtered_sessions, "Carbon_Savings_kgCO2")
     revenue_total = numeric_sum(filtered_sales, "Total_Revenue_MYR")
@@ -228,45 +607,45 @@ def render_kpi_header(sessions, filtered_sessions, sales, filtered_sales):
     alerts = int(alert_mask(filtered_sessions, threshold).fillna(False).sum())
     baseline = int(alert_mask(filtered_sessions, TEMP_LIMIT_C).fillna(False).sum())
 
-    col1, col2, col3, col4 = st.columns(4)
-    with col1:
-        with st.container(border=True):
+    with st.container(key="kpi_strip", border=True):
+        col1, col2, col3, col4 = st.columns(4)
+        with col1:
             st.metric(
-                "Energy delivered",
-                f"{energy_sum:,.0f} kWh",
+                t("Total energy (kWh)"),
+                f"{energy_sum:,.2f}",
                 delta=mean_delta(filtered_sessions["Energy_kWh"], sessions["Energy_kWh"]),
-                help="Delta: average energy per filtered session vs all sessions.",
+                help=t("Delta: average energy per filtered session vs all sessions."),
             )
-    with col2:
-        with st.container(border=True):
+        with col2:
             st.metric(
-                "Carbon offset",
-                f"{carbon_sum:,.0f} kg CO₂",
+                t("Carbon offset (kg CO₂)"),
+                f"{carbon_sum:,.2f}",
                 delta=mean_delta(
                     filtered_sessions["Carbon_Savings_kgCO2"],
                     sessions["Carbon_Savings_kgCO2"],
                 ),
-                help="Delta: average carbon saving per filtered session vs all sessions.",
+                help=t("Delta: average carbon saving per filtered session vs all sessions."),
             )
-    with col3:
-        with st.container(border=True):
+        with col3:
             st.metric(
-                "Total revenue",
-                f"MYR {revenue_total:,.0f}",
-                delta=mean_delta(filtered_sales["Total_Revenue_MYR"], sales["Total_Revenue_MYR"]),
-                help=(
+                t("Total revenue (MYR)"),
+                f"{revenue_total:,.2f}",
+                delta=mean_delta(
+                    filtered_sales["Total_Revenue_MYR"],
+                    sales["Total_Revenue_MYR"],
+                ),
+                help=t(
                     "Filtered sales revenue plus filtered charging Net Billable. "
                     "Delta: average sales transaction value vs all transactions."
                 ),
             )
-    with col4:
-        with st.container(border=True):
+        with col4:
             st.metric(
-                "Active alerts",
+                t("Active alerts"),
                 f"{alerts:,}",
                 delta=alerts - baseline,
                 delta_color="inverse",
-                help=(
+                help=t(
                     "Sessions above the alert temperature with more than 20 minutes overstay. "
                     "Delta: change versus the default 40 °C threshold."
                 ),
@@ -297,15 +676,15 @@ def base_config(chart: alt.Chart) -> alt.Chart:
 
 def draw_hourly_demand(sessions):
     """Draw total energy delivered by charging start hour inside a bordered container."""
-    with st.container(border=True):
-        st.markdown("**Energy demand by start hour**")
-        st.caption("Total energy delivered across campus by session start hour.")
+    with st.container(key="chart_hourly_demand", border=True):
+        st.markdown(f"### {t('Energy demand by start hour')}")
+        st.caption(t("Total energy delivered across campus by session start hour."))
         usable = pd.DataFrame({
             "hour": pd.to_numeric(sessions["Start_Hour"], errors="coerce"),
             "energy": pd.to_numeric(sessions["Energy_kWh"], errors="coerce"),
         }).dropna()
         if usable.empty:
-            st.info("No charging sessions match the current filters.")
+            st.info(t("No charging sessions match the current filters."))
             return
         grouped = usable.groupby(usable["hour"].astype(int))["energy"].sum().sort_index()
         if grouped.index.min() >= 0 and grouped.index.max() <= 23:
@@ -317,18 +696,18 @@ def draw_hourly_demand(sessions):
         base = alt.Chart(chart_data).encode(
             x=alt.X(
                 "Start_Hour:Q",
-                title="Start hour",
+                title=t("Start hour"),
                 scale=alt.Scale(domain=[0, 23]),
-                axis=alt.Axis(tickMinStep=2, format="d"),
+                axis=alt.Axis(tickMinStep=2, format="d", labelAngle=0),
             ),
             y=alt.Y(
                 "Energy_kWh:Q",
-                title="Energy delivered (kWh)",
+                title=t("Energy delivered (kWh)"),
                 scale=alt.Scale(zero=True),
             ),
             tooltip=[
-                alt.Tooltip("Start_Hour:Q", title="Start hour", format="d"),
-                alt.Tooltip("Energy_kWh:Q", title="Energy delivered (kWh)", format=",.1f"),
+                alt.Tooltip("Start_Hour:Q", title=t("Start hour"), format="d"),
+                alt.Tooltip("Energy_kWh:Q", title=t("Energy delivered (kWh)"), format=",.1f"),
             ],
         )
         line = base.mark_line(color=COLOR_PRIMARY_BLUE, strokeWidth=2)
@@ -339,41 +718,55 @@ def draw_hourly_demand(sessions):
 
 def draw_average_billable(sessions):
     """Draw average net billable amount by charger and user type."""
-    with st.container(border=True):
-        st.markdown("**Average net bill by charger and user type**")
-        st.caption("Mean billable revenue comparing AC and DC chargers across user groups.")
+    with st.container(key="chart_average_billable", border=True):
+        st.markdown(f"### {t('Average net bill by charger and user type')}")
+        st.caption(
+            t("Mean billable revenue comparing AC and DC chargers across user groups.")
+        )
         plot_data = sessions.copy()
         plot_data["Net_Billable_MYR"] = pd.to_numeric(
             plot_data["Net_Billable_MYR"], errors="coerce"
         )
-        plot_data = plot_data.dropna(subset=["Charger_Type", "User_Type", "Net_Billable_MYR"])
+        plot_data = plot_data.dropna(
+            subset=["Charger_Type", "User_Type", "Net_Billable_MYR"]
+        )
         if plot_data.empty:
-            st.info("No charging sessions match the current filters.")
+            st.info(t("No charging sessions match the current filters."))
             return
         grouped = (
-            plot_data.groupby(["Charger_Type", "User_Type"], as_index=False)["Net_Billable_MYR"]
+            plot_data.groupby(["Charger_Type", "User_Type"], as_index=False)[
+                "Net_Billable_MYR"
+            ]
             .mean()
         )
         chart = alt.Chart(grouped).mark_bar(
             cornerRadiusTopLeft=4,
             cornerRadiusTopRight=4,
         ).encode(
-            x=alt.X("Charger_Type:N", title="Charger type", sort=["AC", "DC"],
-                    axis=alt.Axis(labelAngle=0)),
+            x=alt.X(
+                "Charger_Type:N",
+                title=t("Charger type"),
+                sort=["AC", "DC"],
+                axis=alt.Axis(labelAngle=0),
+            ),
             xOffset=alt.XOffset("User_Type:N", sort=USER_TYPE_COLORS["domain"]),
-            y=alt.Y("Net_Billable_MYR:Q", title="Average net billable (MYR)"),
+            y=alt.Y("Net_Billable_MYR:Q", title=t("Average net billable (MYR)")),
             color=alt.Color(
                 "User_Type:N",
-                title="User type",
+                title=t("User type"),
                 scale=alt.Scale(
                     domain=USER_TYPE_COLORS["domain"],
                     range=USER_TYPE_COLORS["range"],
                 ),
             ),
             tooltip=[
-                alt.Tooltip("Charger_Type:N", title="Charger type"),
-                alt.Tooltip("User_Type:N", title="User type"),
-                alt.Tooltip("Net_Billable_MYR:Q", title="Average net bill (MYR)", format=",.2f"),
+                alt.Tooltip("Charger_Type:N", title=t("Charger type")),
+                alt.Tooltip("User_Type:N", title=t("User type")),
+                alt.Tooltip(
+                    "Net_Billable_MYR:Q",
+                    title=t("Average net bill (MYR)"),
+                    format=",.2f",
+                ),
             ],
         )
         st.altair_chart(base_config(chart), width="stretch")
@@ -381,23 +774,27 @@ def draw_average_billable(sessions):
 
 def draw_sales_revenue(sales):
     """Draw filtered sales revenue totaled by transaction date."""
-    with st.container(border=True):
-        st.markdown("**Daily sales revenue**")
-        st.caption("Aggregated daily revenue from campus retail and energy services.")
+    with st.container(key="chart_sales_revenue", border=True):
+        st.markdown(f"### {t('Daily sales revenue')}")
+        st.caption(t("Aggregated daily revenue from campus retail and energy services."))
         usable = pd.DataFrame({
             "day": transaction_days(sales),
             "revenue": pd.to_numeric(sales["Total_Revenue_MYR"], errors="coerce"),
         }).dropna()
         if usable.empty:
-            st.info("No sales transactions match the current filters.")
+            st.info(t("No sales transactions match the current filters."))
             return
         daily = usable.groupby("day", as_index=False)["revenue"].sum().sort_values("day")
         base = alt.Chart(daily).encode(
-            x=alt.X("day:T", title="Transaction date", axis=alt.Axis(format="%Y-%m-%d")),
-            y=alt.Y("revenue:Q", title="Revenue (MYR)", scale=alt.Scale(zero=True)),
+            x=alt.X(
+                "day:T",
+                title=t("Transaction date"),
+                axis=alt.Axis(format="%Y-%m-%d", labelAngle=0),
+            ),
+            y=alt.Y("revenue:Q", title=t("Revenue (MYR)"), scale=alt.Scale(zero=True)),
             tooltip=[
-                alt.Tooltip("day:T", title="Transaction date", format="%Y-%m-%d"),
-                alt.Tooltip("revenue:Q", title="Revenue (MYR)", format=",.2f"),
+                alt.Tooltip("day:T", title=t("Transaction date"), format="%Y-%m-%d"),
+                alt.Tooltip("revenue:Q", title=t("Revenue (MYR)"), format=",.2f"),
             ],
         )
         line = base.mark_line(color=COLOR_PRIMARY_BLUE, strokeWidth=2)
@@ -408,17 +805,17 @@ def draw_sales_revenue(sales):
 
 def draw_temperature_scatter(sessions, threshold):
     """Plot battery temperature against overstay with safety reference rules."""
-    with st.container(border=True):
-        st.markdown("**Battery temperature vs overstay**")
+    with st.container(key="chart_temperature_scatter", border=True):
+        st.markdown(f"### {t('Battery temperature vs overstay')}")
         st.caption(
-            "Scatter plot of battery temperature versus overstay minutes with safety thresholds."
+            t("Scatter plot of battery temperature versus overstay minutes with safety thresholds.")
         )
         temperature = pd.to_numeric(sessions["Battery_Temp_C"], errors="coerce")
         overstay = pd.to_numeric(sessions["Overstay_Mins"], errors="coerce")
         valid = temperature.notna() & overstay.notna()
         plot_data = sessions.loc[valid].copy()
         if plot_data.empty:
-            st.info("No valid temperature and overstay data to display.")
+            st.info(t("No valid temperature and overstay data to display."))
             return
 
         plot_data["Battery_Temp_C"] = temperature[valid]
@@ -435,58 +832,47 @@ def draw_temperature_scatter(sessions, threshold):
         scatter = alt.Chart(plot_data).mark_point(
             size=40, opacity=0.75, filled=True
         ).encode(
-            x=alt.X("Battery_Temp_C:Q", title="Battery temperature (°C)",
-                    scale=alt.Scale(zero=False)),
-            y=alt.Y("Overstay_Mins:Q", title="Overstay (minutes)"),
+            x=alt.X(
+                "Battery_Temp_C:Q",
+                title=t("Battery temperature (°C)"),
+                scale=alt.Scale(zero=False),
+            ),
+            y=alt.Y("Overstay_Mins:Q", title=t("Overstay (minutes)")),
             color=alt.Color(
                 "Status:N",
-                title="Status",
+                title=t("Status"),
                 scale=alt.Scale(
                     domain=STATUS_COLORS["domain"],
                     range=STATUS_COLORS["range"],
                 ),
             ),
             tooltip=[
-                alt.Tooltip("Session_ID:N", title="Session ID"),
-                alt.Tooltip("Charger_Type:N", title="Charger type"),
-                alt.Tooltip("Battery_Temp_C:Q", title="Battery temp (°C)", format=".1f"),
-                alt.Tooltip("Overstay_Mins:Q", title="Overstay (mins)", format=".1f"),
-                alt.Tooltip("Status:N", title="Status"),
+                alt.Tooltip("Session_ID:N", title=t("Session ID")),
+                alt.Tooltip("Charger_Type:N", title=t("Charger type")),
+                alt.Tooltip(
+                    "Battery_Temp_C:Q",
+                    title=t("Battery temp (°C)"),
+                    format=".1f",
+                ),
+                alt.Tooltip(
+                    "Overstay_Mins:Q",
+                    title=t("Overstay (mins)"),
+                    format=".1f",
+                ),
+                alt.Tooltip("Status:N", title=t("Status")),
             ],
         )
         rule_x = alt.Chart(pd.DataFrame({"threshold": [float(threshold)]})).mark_rule(
             color=COLOR_MUTED_TEXT, strokeDash=[4, 4], strokeWidth=1.2
         ).encode(x="threshold:Q")
-        rule_y = alt.Chart(pd.DataFrame({"limit": [float(OVERSTAY_LIMIT_MINS)]})).mark_rule(
+        rule_y = alt.Chart(
+            pd.DataFrame({"limit": [float(OVERSTAY_LIMIT_MINS)]})
+        ).mark_rule(
             color=COLOR_MUTED_TEXT, strokeDash=[4, 4], strokeWidth=1.2
         ).encode(y="limit:Q")
 
         chart = base_config(scatter + rule_x + rule_y)
         st.altair_chart(chart, width="stretch")
-
-
-def page_executive_overview():
-    """Executive overview with shared KPIs and three filtered charts."""
-    sessions, sales, filtered_sessions, filtered_sales, selection = load_filtered_view()
-    render_page_header("Executive Overview", sessions, filtered_sessions, selection)
-    render_kpi_header(sessions, filtered_sessions, sales, filtered_sales)
-
-    left, right = st.columns(2)
-    with left:
-        try:
-            draw_hourly_demand(filtered_sessions)
-        except Exception as exc:
-            st.error(f"Could not draw hourly energy demand: {exc}")
-    with right:
-        try:
-            draw_average_billable(filtered_sessions)
-        except Exception as exc:
-            st.error(f"Could not draw average net billable: {exc}")
-
-    try:
-        draw_sales_revenue(filtered_sales)
-    except Exception as exc:
-        st.error(f"Could not draw sales revenue: {exc}")
 
 
 def render_alert_banners(sessions, threshold):
@@ -500,147 +886,327 @@ def render_alert_banners(sessions, threshold):
     risky_share = 0.0 if total == 0 else risky_count / total * 100
     warm_share = 0.0 if total == 0 else warm_count / total * 100
     limit = OVERSTAY_LIMIT_MINS
+
     if risky_count:
-        st.error(
-            f"{risky_count:,} high-risk sessions ({risky_share:.1f}% of filtered sessions). "
-            f"Battery temperature is above {threshold:.1f}°C and overstay is above {limit} minutes."
-        )
+        st.error(t(
+            "{count:,} high-risk sessions ({share:.1f}% of filtered sessions). "
+            "Battery temperature is above {threshold:.1f}°C and overstay is above {limit} minutes.",
+            count=risky_count,
+            share=risky_share,
+            threshold=threshold,
+            limit=limit,
+        ))
     if warm_count:
-        st.warning(
-            f"{warm_count:,} sessions are above {threshold:.1f}°C without an overstay above "
-            f"{limit} minutes ({warm_share:.1f}% of filtered sessions)."
-        )
+        st.warning(t(
+            "{count:,} sessions are above {threshold:.1f}°C without an overstay above "
+            "{limit} minutes ({share:.1f}% of filtered sessions).",
+            count=warm_count,
+            threshold=threshold,
+            limit=limit,
+            share=warm_share,
+        ))
     if not risky_count and not warm_count:
-        st.success(f"No filtered sessions are above the {threshold:.1f}°C temperature threshold.")
+        st.success(t(
+            "No filtered sessions are above the {threshold:.1f}°C temperature threshold.",
+            threshold=threshold,
+        ))
+
+
+def get_session_column_config():
+    """Return localized column configuration for the charging sessions table."""
+    return {
+        "Session_ID": st.column_config.TextColumn(t("Session ID")),
+        "Charger_Type": st.column_config.TextColumn(t("Charger Type")),
+        "User_Type": st.column_config.TextColumn(t("User Type")),
+        "Start_Hour": st.column_config.NumberColumn(
+            t("Start Hour"), format="%d"
+        ),
+        "Duration_Mins": st.column_config.NumberColumn(
+            t("Duration (mins)"), format="%.0f"
+        ),
+        "Energy_kWh": st.column_config.NumberColumn(
+            t("Energy (kWh)"), format="%.2f"
+        ),
+        "Overstay_Mins": st.column_config.NumberColumn(
+            t("Overstay (mins)"), format="%.0f"
+        ),
+        "Battery_Temp_C": st.column_config.NumberColumn(
+            t("Battery Temp (°C)"), format="%.1f"
+        ),
+        "Grid_Status_Label": st.column_config.TextColumn(t("Grid Status")),
+        "Duration_Hours": st.column_config.NumberColumn(
+            t("Duration (hours)"), format="%.2f"
+        ),
+        "Power_Rate_kW": st.column_config.NumberColumn(
+            t("Power Rate (kW)"), format="%.2f"
+        ),
+        "Carbon_Savings_kgCO2": st.column_config.NumberColumn(
+            t("Carbon Savings (kg CO₂)"), format="%.2f"
+        ),
+        "Peak_Hour_Flag": st.column_config.CheckboxColumn(t("Peak Hour")),
+        "Base_Rate_MYR": st.column_config.NumberColumn(
+            t("Base Rate (MYR)"), format="%.2f"
+        ),
+        "Base_Fee_MYR": st.column_config.NumberColumn(
+            t("Base Fee (MYR)"), format="%.2f"
+        ),
+        "Peak_Surge_MYR": st.column_config.NumberColumn(
+            t("Peak Surge (MYR)"), format="%.2f"
+        ),
+        "Overstay_Fee_MYR": st.column_config.NumberColumn(
+            t("Overstay Fee (MYR)"), format="%.2f"
+        ),
+        "Net_Billable_MYR": st.column_config.NumberColumn(
+            t("Net Billable (MYR)"), format="%.2f"
+        ),
+        "High_Risk_Flag": st.column_config.CheckboxColumn(t("High Risk")),
+    }
+
+
+def get_sales_column_config():
+    """Return localized column configuration for the sales transactions table."""
+    return {
+        "Transaction_ID": st.column_config.TextColumn(t("Transaction ID")),
+        "Hub_Location": st.column_config.TextColumn(t("Hub Location")),
+        "Category": st.column_config.TextColumn(t("Category")),
+        "Units_Sold": st.column_config.NumberColumn(
+            t("Units Sold"), format="%.0f"
+        ),
+        "Unit_Price_MYR": st.column_config.NumberColumn(
+            t("Unit Price (MYR)"), format="%.2f"
+        ),
+        "Total_Revenue_MYR": st.column_config.NumberColumn(
+            t("Total Revenue (MYR)"), format="%.2f"
+        ),
+        "Customer_Type": st.column_config.TextColumn(t("Customer Type")),
+        "Transaction_Date": st.column_config.DateColumn(
+            t("Transaction Date"), format="YYYY-MM-DD"
+        ),
+        "Payment_Method": st.column_config.TextColumn(t("Payment Method")),
+    }
+
+
+def page_executive_overview():
+    """Executive overview with shared KPIs and three filtered charts."""
+    sessions, sales, filtered_sessions, filtered_sales, selection = load_filtered_view()
+    summary = format_filter_summary(sessions, filtered_sessions, selection)
+    render_campus_banner(
+        "Executive Overview",
+        "Track campus energy demand, EV charging metrics, and retail sales revenue.",
+        summary,
+    )
+    render_kpi_header(sessions, filtered_sessions, sales, filtered_sales)
+
+    left, right = st.columns(2)
+    with left:
+        try:
+            draw_hourly_demand(filtered_sessions)
+        except Exception as exc:
+            st.error(t("Could not draw hourly energy demand: {exc}", exc=exc))
+    with right:
+        try:
+            draw_average_billable(filtered_sessions)
+        except Exception as exc:
+            st.error(t("Could not draw average net billable: {exc}", exc=exc))
+
+    try:
+        draw_sales_revenue(filtered_sales)
+    except Exception as exc:
+        st.error(t("Could not draw sales revenue: {exc}", exc=exc))
 
 
 def page_alert_center():
     """Alert center for over-temperature and high-risk overstay sessions."""
     sessions, sales, filtered_sessions, filtered_sales, selection = load_filtered_view()
-    render_page_header("Alert Center", sessions, filtered_sessions, selection)
+    summary = format_filter_summary(sessions, filtered_sessions, selection)
+    render_campus_banner(
+        "Alert Center",
+        "Identify over-temperature battery events and overstay risk sessions.",
+        summary,
+    )
     render_kpi_header(sessions, filtered_sessions, sales, filtered_sales)
 
     threshold = float(st.slider(
-        "Temperature threshold (°C)", min_value=30.0, max_value=60.0,
-        value=float(TEMP_LIMIT_C), step=0.5, format="%.1f", key=TEMP_KEY,
-        help=(
-            "High-risk sessions are hotter than this value and overstay "
-            f"by more than {OVERSTAY_LIMIT_MINS} minutes."
+        t("Temperature threshold (°C)"),
+        min_value=30.0,
+        max_value=60.0,
+        value=float(st.session_state.get(TEMP_KEY, TEMP_LIMIT_C)),
+        step=0.5,
+        format="%.1f",
+        key=TEMP_KEY,
+        help=t(
+            "High-risk sessions are hotter than this value and overstay by more than 20 minutes."
         ),
     ))
     render_alert_banners(filtered_sessions, threshold)
 
-    st.markdown("**High-risk sessions**")
-    st.caption("Sessions above the threshold with an overstay above 20 minutes, hottest first.")
-    risky = alert_mask(filtered_sessions, threshold).fillna(False)
-    table = filtered_sessions.loc[risky].sort_values("Battery_Temp_C", ascending=False)
-    session_config = {
-        "Battery_Temp_C": st.column_config.NumberColumn("Battery Temp (°C)", format="%.1f"),
-        "Overstay_Mins": st.column_config.NumberColumn("Overstay (mins)", format="%.1f"),
-        "Energy_kWh": st.column_config.NumberColumn("Energy (kWh)", format="%.2f"),
-        "Carbon_Savings_kgCO2": st.column_config.NumberColumn(
-            "Carbon Savings (kg CO₂)", format="%.2f"
-        ),
-        "Net_Billable_MYR": st.column_config.NumberColumn(
-            "Net Billable (MYR)", format="MYR %.2f"
-        ),
-        "Power_Rate_kW": st.column_config.NumberColumn("Power Rate (kW)", format="%.2f"),
-        "Duration_Mins": st.column_config.NumberColumn("Duration (mins)", format="%.1f"),
-    }
-    st.dataframe(table, hide_index=True, column_config=session_config)
+    with st.container(key="records_high_risk", border=True):
+        st.markdown(f"### {t('High-risk sessions')}")
+        st.caption(
+            t("Sessions above the threshold with an overstay above 20 minutes, hottest first.")
+        )
+        risky = alert_mask(filtered_sessions, threshold).fillna(False)
+        table = filtered_sessions.loc[risky].sort_values(
+            "Battery_Temp_C", ascending=False
+        )
+        st.dataframe(
+            table,
+            hide_index=True,
+            column_config=get_session_column_config(),
+        )
 
     try:
         draw_temperature_scatter(filtered_sessions, threshold)
     except Exception as exc:
-        st.error(f"Could not draw the alert scatter: {exc}")
+        st.error(t("Could not draw the alert scatter: {exc}", exc=exc))
 
 
 def page_data_viewer():
     """Show the filtered charging and sales tables with CSV downloads."""
     sessions, sales, filtered_sessions, filtered_sales, selection = load_filtered_view()
-    render_page_header("Data Viewer", sessions, filtered_sessions, selection)
+    summary = format_filter_summary(sessions, filtered_sessions, selection)
+    render_campus_banner(
+        "Data Viewer",
+        "Inspect and export raw charging sessions and retail transactions.",
+        summary,
+    )
     render_kpi_header(sessions, filtered_sessions, sales, filtered_sales)
 
-    charging_tab, sales_tab = st.tabs(["Charging sessions", "Sales transactions"])
-
-    session_config = {
-        "Battery_Temp_C": st.column_config.NumberColumn("Battery Temp (°C)", format="%.1f"),
-        "Overstay_Mins": st.column_config.NumberColumn("Overstay (mins)", format="%.1f"),
-        "Energy_kWh": st.column_config.NumberColumn("Energy (kWh)", format="%.2f"),
-        "Carbon_Savings_kgCO2": st.column_config.NumberColumn(
-            "Carbon Savings (kg CO₂)", format="%.2f"
-        ),
-        "Net_Billable_MYR": st.column_config.NumberColumn(
-            "Net Billable (MYR)", format="MYR %.2f"
-        ),
-        "Power_Rate_kW": st.column_config.NumberColumn("Power Rate (kW)", format="%.2f"),
-        "Duration_Mins": st.column_config.NumberColumn("Duration (mins)", format="%.1f"),
-    }
-    sales_config = {
-        "Total_Revenue_MYR": st.column_config.NumberColumn(
-            "Total Revenue (MYR)", format="MYR %.2f"
-        ),
-        "Unit_Price_MYR": st.column_config.NumberColumn(
-            "Unit Price (MYR)", format="MYR %.2f"
-        ),
-        "Units_Sold": st.column_config.NumberColumn("Units Sold", format="%.0f"),
-        "Transaction_Date": st.column_config.DateColumn(
-            "Transaction Date", format="YYYY-MM-DD"
-        ),
-    }
+    charging_tab, sales_tab = st.tabs([t("Charging sessions"), t("Sales transactions")])
 
     with charging_tab:
-        st.caption(f"{len(filtered_sessions):,} of {len(sessions):,} charging sessions")
-        st.dataframe(
-            filtered_sessions,
-            hide_index=True,
-            height=420,
-            column_config=session_config,
-        )
-        st.download_button(
-            "Download filtered charging sessions",
-            data=filtered_sessions.to_csv(index=False).encode("utf-8"),
-            file_name="filtered_charging_sessions.csv",
-            mime="text/csv",
-            key="download_charging_sessions",
-            type="primary",
-            icon=":material/download:",
-        )
+        with st.container(key="records_charging", border=True):
+            st.caption(
+                t(
+                    "{filtered:,} of {total:,} charging sessions",
+                    filtered=len(filtered_sessions),
+                    total=len(sessions),
+                )
+            )
+            st.dataframe(
+                filtered_sessions,
+                hide_index=True,
+                height=420,
+                column_config=get_session_column_config(),
+            )
+            st.download_button(
+                t("Download filtered charging sessions"),
+                data=filtered_sessions.to_csv(index=False).encode("utf-8"),
+                file_name="filtered_charging_sessions.csv",
+                mime="text/csv",
+                key="download_charging_sessions",
+                type="primary",
+                icon=":material/download:",
+            )
 
     with sales_tab:
-        st.caption(f"{len(filtered_sales):,} of {len(sales):,} sales transactions")
-        st.dataframe(
-            filtered_sales,
-            hide_index=True,
-            height=420,
-            column_config=sales_config,
+        with st.container(key="records_sales", border=True):
+            st.caption(
+                t(
+                    "{filtered:,} of {total:,} sales transactions",
+                    filtered=len(filtered_sales),
+                    total=len(sales),
+                )
+            )
+            st.dataframe(
+                filtered_sales,
+                hide_index=True,
+                height=420,
+                column_config=get_sales_column_config(),
+            )
+            st.download_button(
+                t("Download filtered sales transactions"),
+                data=filtered_sales.to_csv(index=False).encode("utf-8"),
+                file_name="filtered_sales_transactions.csv",
+                mime="text/csv",
+                key="download_sales_transactions",
+                type="primary",
+                icon=":material/download:",
+            )
+
+
+def render_top_navigation(selected_page, pages):
+    """Render top brand card with logo, navigation links, and language selector."""
+    with st.container(key="top_navigation"):
+        brand_col, nav_col, lang_col = st.columns(
+            [3.4, 4.8, 1.4], vertical_alignment="center"
         )
-        st.download_button(
-            "Download filtered sales transactions",
-            data=filtered_sales.to_csv(index=False).encode("utf-8"),
-            file_name="filtered_sales_transactions.csv",
-            mime="text/csv",
-            key="download_sales_transactions",
-            type="primary",
-            icon=":material/download:",
-        )
+        with brand_col:
+            logo_data = image_uri("taylors-logo.png")
+            st.markdown(
+                f'<div class="brand">'
+                f'<img src="{logo_data}" alt="Taylor’s University logo">'
+                f'<div>'
+                f'<strong>{escape(t("Smart Campus Energy Console"))}</strong>'
+                f'<small>{escape(t("Taylor\'s Lakeside Campus"))}</small>'
+                f'</div>'
+                f'</div>',
+                unsafe_allow_html=True,
+            )
+        with nav_col:
+            page_items = [
+                ("Executive Overview", pages[0]),
+                ("Alert Center", pages[1]),
+                ("Data Viewer", pages[2]),
+            ]
+            c1, c2, c3 = st.columns(3, vertical_alignment="center")
+            for col, (label_key, page_obj) in zip([c1, c2, c3], page_items):
+                with col:
+                    is_current = (
+                        page_obj == selected_page
+                        or page_obj.url_path == getattr(selected_page, "url_path", None)
+                    )
+                    if is_current:
+                        st.markdown(
+                            f'<div class="nav-active-wrap">'
+                            f'<span class="nav-active">{escape(t(label_key))}</span>'
+                            f'</div>',
+                            unsafe_allow_html=True,
+                        )
+                    else:
+                        st.page_link(page_obj, label=t(label_key))
+        with lang_col:
+            st.selectbox(
+                "Language / 语言",
+                ["English", "中文"],
+                key="language",
+                label_visibility="collapsed",
+            )
 
 
 def main():
     """Configure the app and run the selected page."""
-    st.set_page_config(page_title="Smart Campus Energy & EV Dashboard", layout="wide")
-    st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
-    selected = st.navigation([
+    if "language" not in st.session_state:
+        st.session_state["language"] = "English"
+
+    st.set_page_config(
+        page_title=t("Smart Campus Energy Console"),
+        page_icon=str(LOGO_PATH),
+        layout="wide",
+    )
+    apply_custom_style()
+
+    pages = [
         st.Page(
             page_executive_overview,
-            title="Executive Overview",
+            title=t("Executive Overview"),
             url_path="",
             default=True,
         ),
-        st.Page(page_alert_center, title="Alert Center", url_path="alerts"),
-        st.Page(page_data_viewer, title="Data Viewer", url_path="data"),
-    ])
-    selected.run()
+        st.Page(
+            page_alert_center,
+            title=t("Alert Center"),
+            url_path="alerts",
+        ),
+        st.Page(
+            page_data_viewer,
+            title=t("Data Viewer"),
+            url_path="data",
+        ),
+    ]
+    selected_page = st.navigation(pages, position="hidden")
+    render_top_navigation(selected_page, pages)
+    selected_page.run()
 
 
 if __name__ == "__main__":
