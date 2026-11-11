@@ -4,10 +4,13 @@ from __future__ import annotations
 
 import math
 import os
+import sys
 from contextlib import contextmanager
 from datetime import date, datetime
 
 os.environ.setdefault("MPLBACKEND", "Agg")
+# Make data_pipeline.py (same folder) importable whatever the working directory is.
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import matplotlib.pyplot as plt  # noqa: E402
 import pandas as pd  # noqa: E402

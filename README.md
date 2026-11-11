@@ -2,18 +2,14 @@
 
 ITS72604 Principles of Programming, Final Examination (Sept 2026).
 
-## Files
+## Folders
 
-| File | Purpose |
+| Folder | Contents |
 | --- | --- |
-| `data/raw/` | Provided datasets: `ev_campus_dataset.csv` (charging sessions) and `sales_data.csv` (sales transactions). |
+| `section_a/` | Section A scripts: `a1_numpy_pandas.py`, `a2_functional.py`, `a3_charts.py`, with their `figures/` and console `outputs/`. |
+| `section_b/` | Section B code: `data_pipeline.py` (B1), `visualizations.py` (B2), `app.py` (B3 Streamlit dashboard), with `figures/` and console `outputs/`. |
+| `data/raw/` | Provided datasets: `ev_campus_dataset.csv` and `sales_data.csv`. |
 | `data/cleaned/` | Pipeline outputs: `cleaned_energy_sales_data.csv` and `cleaned_sales_data.csv`. |
-| `data_pipeline.py` | Section B1: cleans the raw files, adds power, carbon and billing columns, saves the cleaned files, prints summary statistics. |
-| `visualizations.py` | Section B2: three Matplotlib/Seaborn panels saved in `figures/`. |
-| `app.py` | Section B3: multi-page Streamlit dashboard (overview, alert center, data viewer). |
-| `section_a/` | Example scripts for Section A questions 1 to 3 and their outputs. |
-| `outputs/` | Console output captured from each script. |
-| `requirements.txt` | Python libraries needed to run everything. |
 
 ## Billing rules used
 
@@ -23,11 +19,11 @@ ITS72604 Principles of Programming, Final Examination (Sept 2026).
 - Overstay after a 15-minute grace period costs 0.5 MYR per minute.
 - High-risk session = overstay above 20 minutes and battery temperature above 40 °C.
 
-## How to run
+## How to run (from the project root)
 
 ```bash
 pip install -r requirements.txt
-python data_pipeline.py
-python visualizations.py
-streamlit run app.py
+python section_b/data_pipeline.py
+python section_b/visualizations.py
+streamlit run section_b/app.py
 ```

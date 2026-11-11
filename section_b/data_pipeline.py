@@ -11,7 +11,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-BASE_DIR = Path(__file__).resolve().parent
+BASE_DIR = Path(__file__).resolve().parent.parent  # project root
 RAW_DIR = BASE_DIR / "data" / "raw"
 CLEANED_DIR = BASE_DIR / "data" / "cleaned"
 EV_FILE = RAW_DIR / "ev_campus_dataset.csv"

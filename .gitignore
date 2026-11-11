@@ -3,7 +3,4 @@ __pycache__/
 .~*
 ~$*
 .venv/
-report/.build/
-notes/
 docs/
-report/
