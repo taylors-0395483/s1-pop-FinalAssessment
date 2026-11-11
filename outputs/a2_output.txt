@@ -1,0 +1,16 @@
+=================================================================
+Section A2: Functional Programming Alert & Surcharge Pipeline
+=================================================================
+Total High-Risk Alert Sessions Detected : 24
+Total Surcharge Revenue (functools.reduce): MYR 42.35
+Total Surcharge Revenue (list comp sum)  : MYR 42.35
+
+Top 5 High-Risk Flagged Charging Sessions:
+Session_ID   Temp (°C)    Overstay (m)   Base Fee     Surcharge 
+----------------------------------------------------------------
+SESS-1102    43.5         22             12.00        1.80      
+SESS-1140    40.6         101            16.25        2.44      
+SESS-1165    43.4         29             12.75        1.91      
+SESS-1212    48.3         71             15.00        2.25      
+SESS-1308    46.6         35             14.00        2.10      
+=================================================================

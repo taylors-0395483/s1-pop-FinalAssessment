@@ -1,0 +1,2 @@
+Busiest grid hour: 8:00 (2187.3 kWh)
+Figures saved to /Users/zhangming/Documents/workspace/taylors/s1-pop/assignments/s1-pop-FinalAssessment/figures

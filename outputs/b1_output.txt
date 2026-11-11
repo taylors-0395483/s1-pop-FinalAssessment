@@ -1,0 +1,45 @@
+Cleaning charging sessions:
+  Duplicate Session_ID rows removed: 0
+  Duration_Mins: 25 missing value(s) filled with median 97
+  Energy_kWh: 35 missing value(s) filled with median 13.28
+  Charger_Type: all values valid ['AC', 'DC']
+  User_Type: all values valid ['Staff', 'Student', 'Visitor']
+  Grid_Status_Label: all values valid ['Grid_Surge', 'Normal', 'Overheated']
+Cleaning sales transactions:
+  Units_Sold: 14 value(s) recovered from revenue / price
+  Units_Sold: 1 missing value(s) filled with median 5
+  Total_Revenue_MYR: 20 value(s) rebuilt as units x price
+  Hub_Location: all values valid ['KL_Campus_Hub', 'Lakeside_Hub', 'Subang_Hub', 'Taylor_Tower_Hub']
+  Category: all values valid ['Charging_Service', 'EV_Accessory', 'Energy_Credit', 'Fleet_Pass']
+  Customer_Type: all values valid ['Public_Fleet', 'Staff', 'Student']
+  Payment_Method: all values valid ['Campus_Wallet', 'Credit_Card', 'TouchNGo']
+
+Saved 1200 sessions to cleaned_energy_sales_data.csv
+Saved 500 transactions to cleaned_sales_data.csv
+
+=== Charging sessions: descriptive statistics ===
+       Duration_Mins  Energy_kWh  Battery_Temp_C  Power_Rate_kW  Net_Billable_MYR
+count        1200.00     1200.00         1200.00        1200.00           1200.00
+mean           93.76       15.53           35.01          14.09             14.58
+std            42.86        7.43            6.04          11.53              7.33
+min            15.00        3.66           17.60           3.91              3.75
+25%            55.00       10.54           30.70           5.66             10.58
+50%            97.00       13.28           34.40           6.57             13.38
+75%           126.00       18.40           39.10          26.99             16.62
+max           214.00       49.64           56.60          53.12             96.25
+
+=== Totals by charger type ===
+              Sessions  Energy_kWh  Carbon_kgCO2  Net_Billable_MYR
+Charger_Type                                                      
+AC                 784     9244.48       4391.16          11451.14
+DC                 416     9385.61       4457.96           6044.24
+
+Peak-window sessions: 481 | High-risk sessions: 24
+
+=== Sales revenue by hub (MYR) ===
+Hub_Location
+KL_Campus_Hub       14735.0
+Lakeside_Hub        31095.0
+Subang_Hub          22110.0
+Taylor_Tower_Hub     7650.0
+Missing values left -> sessions: 0, sales: 0

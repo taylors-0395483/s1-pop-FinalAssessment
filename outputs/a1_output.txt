@@ -1,0 +1,46 @@
+============================================================
+Pandas Operation 1: Missing Value Imputation
+============================================================
+Missing values before imputation:
+Duration_Mins    25
+Energy_kWh       35
+
+Calculated medians:
+Duration_Mins    97.00
+Energy_kWh       13.28
+
+Missing values after median imputation:
+Duration_Mins    0
+Energy_kWh       0
+
+============================================================
+Pandas Operation 2: Group-wise Net Billable Summary
+============================================================
+                        count      sum   mean
+Charger_Type User_Type                       
+AC           Staff        279  3987.99  14.29
+             Student      392  5752.53  14.67
+             Visitor      113  1710.62  15.14
+DC           Staff        155  2142.38  13.82
+             Student      204  2975.58  14.59
+             Visitor       57   926.28  16.25
+
+============================================================
+NumPy Operation 1: 2D Grid Load Slicing
+============================================================
+AC Peak Energy (12:00-16:59): 3070.98 kWh (33.22% of daily AC)
+DC Peak Energy (12:00-16:59): 3087.03 kWh (32.89% of daily DC)
+
+============================================================
+NumPy Operation 2: Boolean Masking Alerts
+============================================================
+Sessions exceeding 45°C: 77 / 1200 (6.42%)
+Mean temperature of alert sessions: 47.61°C
+
+============================================================
+Performance Benchmark: NumPy Vectorization vs Python Loop
+============================================================
+Scaled dataset size: 1,200,000 records
+Pure Python Loop Execution Time: 0.0284 seconds
+NumPy Vectorized Execution Time: 0.0086 seconds
+Vectorization Speedup Factor   : 3.30x faster
