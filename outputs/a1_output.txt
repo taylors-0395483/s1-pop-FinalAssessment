@@ -41,6 +41,6 @@ Mean temperature of alert sessions: 47.61°C
 Performance Benchmark: NumPy Vectorization vs Python Loop
 ============================================================
 Scaled dataset size: 1,200,000 records
-Pure Python Loop Execution Time: 0.0284 seconds
-NumPy Vectorized Execution Time: 0.0086 seconds
-Vectorization Speedup Factor   : 3.30x faster
+Pure Python Loop Execution Time: 0.0353 seconds
+NumPy Vectorized Execution Time: 0.0113 seconds
+Vectorization Speedup Factor   : 3.13x faster

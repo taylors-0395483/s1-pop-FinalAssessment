@@ -11,7 +11,7 @@ from pathlib import Path
 
 # Project path resolution (parent directory containing the dataset)
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-DATA_FILE = PROJECT_ROOT / "cleaned_energy_sales_data.csv"
+DATA_FILE = PROJECT_ROOT / "data" / "cleaned" / "cleaned_energy_sales_data.csv"
 
 # Domain constants defining alert thresholds and fee multipliers
 OVERSTAY_LIMIT = 20  # Overstay threshold in minutes

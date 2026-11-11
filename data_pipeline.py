@@ -12,10 +12,12 @@ import numpy as np
 import pandas as pd
 
 BASE_DIR = Path(__file__).resolve().parent
-EV_FILE = BASE_DIR / "ev_campus_dataset.csv"
-SALES_FILE = BASE_DIR / "sales_data.csv"
-CLEANED_EV_FILE = BASE_DIR / "cleaned_energy_sales_data.csv"
-CLEANED_SALES_FILE = BASE_DIR / "cleaned_sales_data.csv"
+RAW_DIR = BASE_DIR / "data" / "raw"
+CLEANED_DIR = BASE_DIR / "data" / "cleaned"
+EV_FILE = RAW_DIR / "ev_campus_dataset.csv"
+SALES_FILE = RAW_DIR / "sales_data.csv"
+CLEANED_EV_FILE = CLEANED_DIR / "cleaned_energy_sales_data.csv"
+CLEANED_SALES_FILE = CLEANED_DIR / "cleaned_sales_data.csv"
 
 # Business rules shared by the pipeline, the charts and the web app.
 CARBON_FACTOR = 0.475  # kg CO2 saved per kWh delivered
@@ -188,6 +190,7 @@ def main():
         ev = prepare_ev_data(verbose=True)
         print("Cleaning sales transactions:")
         sales = prepare_sales_data(verbose=True)
+        CLEANED_DIR.mkdir(parents=True, exist_ok=True)
         ev.to_csv(CLEANED_EV_FILE, index=False)
         sales.to_csv(CLEANED_SALES_FILE, index=False, date_format="%Y-%m-%d")
     except (FileNotFoundError, ValueError, KeyError) as error:

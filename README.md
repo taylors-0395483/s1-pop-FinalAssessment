@@ -6,7 +6,9 @@ ITS72604 Principles of Programming, Final Examination (Sept 2026).
 
 | File | Purpose |
 | --- | --- |
-| `data_pipeline.py` | Section B1: cleans `ev_campus_dataset.csv` and `sales_data.csv`, adds power, carbon and billing columns, saves `cleaned_energy_sales_data.csv` and `cleaned_sales_data.csv`, prints summary statistics. |
+| `data/raw/` | Provided datasets: `ev_campus_dataset.csv` (charging sessions) and `sales_data.csv` (sales transactions). |
+| `data/cleaned/` | Pipeline outputs: `cleaned_energy_sales_data.csv` and `cleaned_sales_data.csv`. |
+| `data_pipeline.py` | Section B1: cleans the raw files, adds power, carbon and billing columns, saves the cleaned files, prints summary statistics. |
 | `visualizations.py` | Section B2: three Matplotlib/Seaborn panels saved in `figures/`. |
 | `app.py` | Section B3: multi-page Streamlit dashboard (overview, alert center, data viewer). |
 | `section_a/` | Example scripts for Section A questions 1 to 3 and their outputs. |
