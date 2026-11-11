@@ -632,10 +632,26 @@ def render_sidebar(sessions, sales):
         1.0 if pd.isna(observed_max) or float(observed_max) <= 0 else float(observed_max)
     )
 
+    defaults = {
+        "sales_date_range": default_range,
+        "minimum_energy_kwh": 0.0,
+        "charger_types": list(default_chargers),
+    }
+
+    def remember(key):
+        """Copy a filter value into a key that survives page switches."""
+        st.session_state[f"_keep_{key}"] = st.session_state[key]
+
     def reset_filters():
-        st.session_state["sales_date_range"] = default_range
-        st.session_state["minimum_energy_kwh"] = 0.0
-        st.session_state["charger_types"] = list(default_chargers)
+        for key, value in defaults.items():
+            st.session_state[key] = value
+            st.session_state[f"_keep_{key}"] = value
+
+    # Streamlit drops widget state when the page changes, so restore it from
+    # the remembered copies before the widgets are drawn.
+    for key, value in defaults.items():
+        st.session_state.setdefault(f"_keep_{key}", value)
+        st.session_state[key] = st.session_state[f"_keep_{key}"]
 
     cur_range = st.session_state.get("sales_date_range", default_range)
     cur_start, cur_end = date_bounds(cur_range, first_day, last_day)
@@ -649,11 +665,6 @@ def render_sidebar(sessions, sales):
 
     active_count = int(is_date_active) + int(is_energy_active) + int(is_chargers_active)
     active_text = t("{count} active", count=active_count)
-
-    # Seed defaults once; passing value= as well would trigger a Session State warning.
-    st.session_state.setdefault("sales_date_range", default_range)
-    st.session_state.setdefault("minimum_energy_kwh", 0.0)
-    st.session_state.setdefault("charger_types", list(default_chargers))
 
     with st.sidebar.container(key="filter_panel", border=True):
         st.markdown(
@@ -673,6 +684,8 @@ def render_sidebar(sessions, sales):
             min_value=first_day,
             max_value=last_day,
             key="sales_date_range",
+            on_change=remember,
+            args=("sales_date_range",),
         )
 
         st.markdown(
@@ -685,6 +698,8 @@ def render_sidebar(sessions, sales):
             max_value=max_energy,
             step=0.1,
             key="minimum_energy_kwh",
+            on_change=remember,
+            args=("minimum_energy_kwh",),
             format="%.1f",
         )
         selected = st.multiselect(
@@ -692,6 +707,8 @@ def render_sidebar(sessions, sales):
             options=default_chargers,
             placeholder=t("Choose charger types"),
             key="charger_types",
+            on_change=remember,
+            args=("charger_types",),
         )
 
         st.button(
